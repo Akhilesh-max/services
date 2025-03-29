@@ -3,6 +3,7 @@
 package tpm_enacttrust
 
 import (
+	"crypto/x509"
 	"testing"
 
 	"github.com/stretchr/testify/assert"
@@ -44,10 +45,12 @@ func TestDecoder_Decode_empty_data(t *testing.T) {
 	d := &EndorsementHandler{}
 
 	emptyData := []byte{}
+	mediaType := "application/corim+cbor"
+	var certPool *x509.CertPool = nil
 
 	expectedErr := `empty data`
 
-	_, err := d.Decode(emptyData)
+	_, err := d.Decode(emptyData, mediaType, certPool)
 
 	assert.EqualError(t, err, expectedErr)
 }
@@ -59,9 +62,11 @@ func TestDecoder_Decode_OK(t *testing.T) {
 	}
 
 	d := &EndorsementHandler{}
+	mediaType := "application/corim+cbor"
+	var certPool *x509.CertPool = nil
 
 	for _, tv := range tvs {
-		_, err := d.Decode(tv)
+		_, err := d.Decode(tv, mediaType, certPool)
 		assert.NoError(t, err)
 	}
 }
@@ -108,11 +113,23 @@ func TestDecoder_Decode_negative_tests(t *testing.T) {
 			expectedErr: `bad key in CoMID at index 0: could not extract node id: could not extract node-id (UUID) from instance-id`,
 		}}
 
+	mediaType := "application/corim+cbor"
+	var certPool *x509.CertPool = nil
+
 	for _, tv := range tvs {
 		t.Run(tv.desc, func(t *testing.T) {
 			d := &EndorsementHandler{}
-			_, err := d.Decode(tv.input)
+			_, err := d.Decode(tv.input, mediaType, certPool)
 			assert.EqualError(t, err, tv.expectedErr)
 		})
 	}
+}
+
+func TestDecoder_DecodeFail(t *testing.T) {
+	d := &EndorsementHandler{}
+	mediaType := "application/corim+cbor"
+	var certPool *x509.CertPool = nil
+
+	_, err := d.Decode(unsignedCorimComidTpmEnactTrustNoDigest, mediaType, certPool)
+	assert.ErrorContains(t, err, "measurement value has no digests")
 }

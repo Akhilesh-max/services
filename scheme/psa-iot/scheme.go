@@ -7,7 +7,10 @@ const (
 )
 
 var EndorsementMediaTypes = []string{
+	// Unsigned CoRIMs
 	`application/corim-unsigned+cbor; profile="http://arm.com/psa/iot/1"`,
+	// Signed CoRIMs
+	`application/corim-signed+cbor; profile="http://arm.com/psa/iot/1"`,
 }
 
 var EvidenceMediaTypes = []string{

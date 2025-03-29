@@ -3,6 +3,8 @@
 package psa_iot
 
 import (
+	"crypto/x509"
+
 	"github.com/veraison/services/handler"
 	"github.com/veraison/services/scheme/common"
 )
@@ -29,6 +31,13 @@ func (o EndorsementHandler) GetSupportedMediaTypes() []string {
 	return EndorsementMediaTypes
 }
 
-func (o EndorsementHandler) Decode(data []byte) (*handler.EndorsementHandlerResponse, error) {
+func (o EndorsementHandler) Decode(data []byte, mediaType string, caCertPool *x509.CertPool) (*handler.EndorsementHandlerResponse, error) {
+	// Check if this is a signed CoRIM based on media type
+	if mediaType == "application/corim-signed+cbor" {
+		// Handle signed CoRIM
+		return common.SignedCorimDecoder(data, &CorimExtractor{}, caCertPool)
+	}
+
+	// Handle unsigned CoRIM
 	return common.UnsignedCorimDecoder(data, &CorimExtractor{})
 }

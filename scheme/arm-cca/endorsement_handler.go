@@ -3,6 +3,9 @@
 package arm_cca
 
 import (
+	"crypto/x509"
+	"strings"
+
 	"github.com/veraison/services/handler"
 	"github.com/veraison/services/scheme/common"
 )
@@ -18,7 +21,7 @@ func (o EndorsementHandler) Close() error {
 }
 
 func (o EndorsementHandler) GetName() string {
-	return "unsigned-corim (CCA platform profile)"
+	return "corim (CCA platform profile)"
 }
 
 func (o EndorsementHandler) GetAttestationScheme() string {
@@ -29,6 +32,14 @@ func (o EndorsementHandler) GetSupportedMediaTypes() []string {
 	return EndorsementMediaTypes
 }
 
-func (o EndorsementHandler) Decode(data []byte) (*handler.EndorsementHandlerResponse, error) {
+// Decode handles both signed and unsigned CoRIMs based on the media type
+func (o EndorsementHandler) Decode(data []byte, mediaType string, caCertPool *x509.CertPool) (*handler.EndorsementHandlerResponse, error) {
+	// Check if this is a signed CoRIM based on media type
+	if strings.Contains(mediaType, "corim-signed") {
+		// Handle signed CoRIM
+		return common.SignedCorimDecoder(data, &CorimExtractor{}, caCertPool)
+	}
+
+	// Handle unsigned CoRIM
 	return common.UnsignedCorimDecoder(data, &CorimExtractor{})
 }

@@ -7,8 +7,8 @@ import _ "embed"
 
 var (
 	//go:embed test/corim/unsignedCorimParsecCcaComidParsecCcaRefValOne.cbor
-	unsignedCorimComidParsecCcaRefValOne []byte
+	unsignedCorimComidParsecCcaRefValOne []byte //nolint:unused // Keep for future tests
 
 	//go:embed test/corim/unsignedCorimParsecCcaComidParsecCcaMultRefVal.cbor
-	unsignedCorimComidParsecCcaMultRefVal []byte
+	unsignedCorimComidParsecCcaMultRefVal []byte //nolint:unused // Keep for future tests
 )

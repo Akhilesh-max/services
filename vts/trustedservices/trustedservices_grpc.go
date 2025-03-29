@@ -44,11 +44,10 @@ const DummyTenantID = "0"
 //
 //   - TODO(tho) load balancing config
 //     See https://github.com/grpc/grpc/blob/master/doc/load-balancing.md
-//
 type GRPCConfig struct {
 	ServerAddress string   `mapstructure:"server-addr" valid:"dialstring"`
 	ListenAddress string   `mapstructure:"listen-addr" valid:"dialstring" config:"zerodefault"`
-	UseTLS	      bool     `mapstructure:"tls" config:"zerodefault"`
+	UseTLS        bool     `mapstructure:"tls" config:"zerodefault"`
 	ServerCert    string   `mapstructure:"cert" config:"zerodefault"`
 	ServerCertKey string   `mapstructure:"cert-key" config:"zerodefault"`
 	CACerts       []string `mapstructure:"ca-certs" config:"zerodefault"`
@@ -60,17 +59,20 @@ func NewGRPCConfig() *GRPCConfig {
 
 type GRPC struct {
 	ServerAddress string
+	Socket        net.Listener
+	Server        *grpc.Server
 
-	TaStore            kvstore.IKVStore
-	EnStore            kvstore.IKVStore
+	TaStore kvstore.IKVStore
+	EnStore kvstore.IKVStore
+
 	EvPluginManager    plugin.IManager[handler.IEvidenceHandler]
 	EndPluginManager   plugin.IManager[handler.IEndorsementHandler]
 	StorePluginManager plugin.IManager[handler.IStoreHandler]
-	PolicyManager      *policymanager.PolicyManager
-	EarSigner          earsigner.IEarSigner
 
-	Server *grpc.Server
-	Socket net.Listener
+	PolicyManager *policymanager.PolicyManager
+	EarSigner     earsigner.IEarSigner
+
+	CACertPool *x509.CertPool // CA cert pool for verifying signed CoRIMs
 
 	logger *zap.SugaredLogger
 
@@ -117,7 +119,7 @@ func (o *GRPC) Init(
 
 	cfg := GRPCConfig{
 		ServerAddress: DefaultVTSAddr,
-		UseTLS: true,
+		UseTLS:        true,
 	}
 
 	loader := config.NewLoader(&cfg)
@@ -145,12 +147,21 @@ func (o *GRPC) Init(
 
 	if cfg.UseTLS {
 		o.logger.Info("loading TLS credentials")
-		creds, err :=  LoadTLSCreds(cfg.ServerCert, cfg.ServerCertKey, cfg.CACerts)
+		creds, err := LoadTLSCreds(cfg.ServerCert, cfg.ServerCertKey, cfg.CACerts)
 		if err != nil {
 			return err
 		}
 
 		opts = append(opts, grpc.Creds(creds))
+
+		// Also load the CA certs for CoRIM signature verification
+		o.CACertPool, err = LoadCACertPool(cfg.CACerts)
+		if err != nil {
+			return fmt.Errorf("failed to load CA certificates for CoRIM verification: %w", err)
+		}
+	} else {
+		// For non-TLS mode, create an empty cert pool
+		o.CACertPool = x509.NewCertPool()
 	}
 
 	server := grpc.NewServer(opts...)
@@ -211,22 +222,37 @@ func (o *GRPC) GetServiceState(context.Context, *emptypb.Empty) (*proto.ServiceS
 	}, nil
 }
 
-func (o *GRPC) SubmitEndorsements(ctx context.Context, req *proto.SubmitEndorsementsRequest) (*proto.SubmitEndorsementsResponse, error) {
-	o.logger.Debugw("SubmitEndorsements", "media-type", req.MediaType)
+func (o *GRPC) SubmitEndorsements(
+	ctx context.Context,
+	req *proto.SubmitEndorsementsRequest,
+) (*proto.SubmitEndorsementsResponse, error) {
+	var out = &proto.SubmitEndorsementsResponse{
+		Status: &proto.Status{Result: true},
+	}
+
+	tenantID := DummyTenantID // Replace with your actual tenant ID extraction logic
 
 	handlerPlugin, err := o.EndPluginManager.LookupByMediaType(req.MediaType)
 	if err != nil {
-		return nil, err
+		out.Status.Result = false
+		out.Status.ErrorDetail = fmt.Sprintf("no decoder available for media type: %q", req.MediaType)
+		o.logger.Warnw("no decoder available", "media-type", req.MediaType, "tenant", tenantID)
+		return out, nil
 	}
 
-	rsp, err := handlerPlugin.Decode(req.Data)
+	decodeResp, err := handlerPlugin.Decode(req.Data, req.MediaType, o.CACertPool)
 	if err != nil {
+		out.Status.Result = false
+		out.Status.ErrorDetail = fmt.Sprintf("failed decoding: %s", err.Error())
+		o.logger.Warnw("failed decoding", "error", err, "media-type", req.MediaType, "tenant", tenantID)
+		return out, nil
+	}
+
+	if err := o.storeEndorsements(ctx, decodeResp); err != nil {
 		return submitEndorsementErrorResponse(err), nil
 	}
-	if err := o.storeEndorsements(ctx, rsp); err != nil {
-		return submitEndorsementErrorResponse(err), nil
-	}
-	return submitEndorsementSuccessResponse(), nil
+
+	return out, nil
 }
 
 func (o *GRPC) storeEndorsements(ctx context.Context, rsp *handler.EndorsementHandlerResponse) error {
@@ -249,6 +275,10 @@ func (o *GRPC) storeEndorsements(ctx context.Context, rsp *handler.EndorsementHa
 	return nil
 }
 
+// submitEndorsementSuccessResponse returns a success response for SubmitEndorsements.
+// Currently unused but kept for symmetry with submitEndorsementErrorResponse.
+//
+//nolint:unused // Keeping this function for API symmetry, may be used in future
 func submitEndorsementSuccessResponse() *proto.SubmitEndorsementsResponse {
 	return &proto.SubmitEndorsementsResponse{
 		Status: &proto.Status{
@@ -592,7 +622,6 @@ func LoadTLSCreds(
 			return nil, fmt.Errorf("error reading CA cert in %s: %w", caPath, err)
 		}
 
-
 		if !certPool.AppendCertsFromPEM(caCertPEM) {
 			return nil, fmt.Errorf("invalid CA cert in %s", caPath)
 		}
@@ -600,11 +629,32 @@ func LoadTLSCreds(
 
 	config := &tls.Config{
 		Certificates: []tls.Certificate{cert},
-		ClientAuth: tls.RequireAndVerifyClientCert,
-		RootCAs: certPool,
-		ClientCAs: certPool,
-		MinVersion: tls.VersionTLS12,
+		ClientAuth:   tls.RequireAndVerifyClientCert,
+		RootCAs:      certPool,
+		ClientCAs:    certPool,
+		MinVersion:   tls.VersionTLS12,
 	}
 
 	return credentials.NewTLS(config), nil
+}
+
+// LoadCACertPool loads CA certificates from the provided paths into a certificate pool
+func LoadCACertPool(caPaths []string) (*x509.CertPool, error) {
+	certPool, err := x509.SystemCertPool()
+	if err != nil {
+		return nil, fmt.Errorf("error loading system certs: %w", err)
+	}
+
+	for _, caPath := range caPaths {
+		caCertPEM, err := os.ReadFile(caPath)
+		if err != nil {
+			return nil, fmt.Errorf("error reading CA cert in %s: %w", caPath, err)
+		}
+
+		if !certPool.AppendCertsFromPEM(caCertPEM) {
+			return nil, fmt.Errorf("invalid CA cert in %s", caPath)
+		}
+	}
+
+	return certPool, nil
 }
