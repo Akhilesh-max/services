@@ -56,7 +56,6 @@ func (s *EndorsementRPCServer) GetSupportedMediaTypes(args interface{}, resp *[]
 }
 
 func (s EndorsementRPCServer) Decode(args []byte, resp *[]byte) error {
-	// Split the arguments into data, mediaType, and caCertPool
 	var decodeArgs struct {
 		Data       []byte
 		MediaType  string
@@ -156,7 +155,6 @@ func (c EndorsementRPCClient) Decode(data []byte, mediaType string, caCertPool [
 		j    []byte
 	)
 
-	// Pack arguments into a single byte array
 	decodeArgs := struct {
 		Data       []byte
 		MediaType  string

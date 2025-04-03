@@ -3,13 +3,13 @@
 package trustedservices
 
 import (
+	"bytes"
 	"context"
 	"crypto/tls"
 	"crypto/x509"
 	"encoding/json"
 	"errors"
 	"fmt"
-	"log"
 	"net"
 	"os"
 	"strings"
@@ -69,6 +69,7 @@ type GRPC struct {
 	PolicyManager      *policymanager.PolicyManager
 	EarSigner          earsigner.IEarSigner
 	CACertPool         *x509.CertPool
+	CACertsPEM         [][]byte
 
 	Server *grpc.Server
 	Socket net.Listener
@@ -146,16 +147,18 @@ func (o *GRPC) Init(
 
 	if cfg.UseTLS {
 		o.logger.Info("loading TLS credentials")
-		creds, certPool, err := LoadTLSCredsWithPool(cfg.ServerCert, cfg.ServerCertKey, cfg.CACerts)
+		creds, certPool, pemData, err := LoadTLSCredsWithPool(cfg.ServerCert, cfg.ServerCertKey, cfg.CACerts)
 		if err != nil {
 			return err
 		}
 
 		o.CACertPool = certPool
+		o.CACertsPEM = pemData
 		opts = append(opts, grpc.Creds(creds))
 	} else {
 		// Initialize empty cert pool for non-TLS mode
 		o.CACertPool = x509.NewCertPool()
+		o.CACertsPEM = [][]byte{}
 	}
 
 	server := grpc.NewServer(opts...)
@@ -228,7 +231,7 @@ func (o *GRPC) SubmitEndorsements(ctx context.Context, req *proto.SubmitEndorsem
 	var caCertPoolBytes []byte
 	if strings.Contains(req.MediaType, "corim-signed") && o.CACertPool != nil {
 		var err error
-		caCertPoolBytes, err = SerializeCertPool(o.CACertPool)
+		caCertPoolBytes, err = o.SerializeCertPool()
 		if err != nil {
 			return nil, err
 		}
@@ -626,34 +629,39 @@ func LoadTLSCreds(
 func LoadTLSCredsWithPool(
 	certPath, keyPath string,
 	caPaths []string,
-) (credentials.TransportCredentials, *x509.CertPool, error) {
+) (credentials.TransportCredentials, *x509.CertPool, [][]byte, error) {
 	if certPath == "" {
-		return nil, nil, fmt.Errorf("cert path must be specified when TLS is enabled")
+		return nil, nil, nil, fmt.Errorf("cert path must be specified when TLS is enabled")
 	}
 
 	if keyPath == "" {
-		return nil, nil, fmt.Errorf("cert key path must be specified when TLS is enabled")
+		return nil, nil, nil, fmt.Errorf("cert key path must be specified when TLS is enabled")
 	}
 
 	cert, err := tls.LoadX509KeyPair(certPath, keyPath)
 	if err != nil {
-		return nil, nil, fmt.Errorf("error loading cert key pair: %w", err)
+		return nil, nil, nil, fmt.Errorf("error loading cert key pair: %w", err)
 	}
 
 	certPool, err := x509.SystemCertPool()
 	if err != nil {
-		return nil, nil, fmt.Errorf("error loading system certs: %w", err)
+		return nil, nil, nil, fmt.Errorf("error loading system certs: %w", err)
 	}
+
+	// Store the PEM-encoded CA certificates
+	caCertsPEM := make([][]byte, 0, len(caPaths))
 
 	for _, caPath := range caPaths {
 		caCertPEM, err := os.ReadFile(caPath)
 		if err != nil {
-			return nil, nil, fmt.Errorf("error reading CA cert in %s: %w", caPath, err)
+			return nil, nil, nil, fmt.Errorf("error reading CA cert in %s: %w", caPath, err)
 		}
 
 		if !certPool.AppendCertsFromPEM(caCertPEM) {
-			return nil, nil, fmt.Errorf("invalid CA cert in %s", caPath)
+			return nil, nil, nil, fmt.Errorf("invalid CA cert in %s", caPath)
 		}
+
+		caCertsPEM = append(caCertsPEM, caCertPEM)
 	}
 
 	config := &tls.Config{
@@ -664,25 +672,21 @@ func LoadTLSCredsWithPool(
 		MinVersion:   tls.VersionTLS12,
 	}
 
-	return credentials.NewTLS(config), certPool, nil
+	return credentials.NewTLS(config), certPool, caCertsPEM, nil
 }
 
-// SerializeCertPool converts a certificate pool to PEM format for transmission
-func SerializeCertPool(pool *x509.CertPool) ([]byte, error) {
-	if pool == nil {
-		return nil, nil
+// SerializeCertPool converts the CA certificate pool to PEM format for transmission
+func (o *GRPC) SerializeCertPool() ([]byte, error) {
+	if o.CACertPool == nil || len(o.CACertsPEM) == 0 {
+		return []byte{}, nil
 	}
 
-	// Since pool.Subjects() is deprecated since Go 1.18 and doesn't include system roots,
-	// we can't directly access the certificates in the pool.
-	// Instead, we'll return an empty serialization for now with a warning.
-	//
-	// A proper implementation would require rewriting how certificate pools are managed
-	// throughout the application, tracking the certificates that are added to the pool
-	// separately.
+	var allPEM bytes.Buffer
+	for _, pemData := range o.CACertsPEM {
+		if _, err := allPEM.Write(pemData); err != nil {
+			return nil, fmt.Errorf("failed to write certificate data: %w", err)
+		}
+	}
 
-	// This is an implementation limitation - we can't properly serialize the cert pool
-	// without changing how we manage certificates in the application
-	log.Println("Warning: SerializeCertPool has limited functionality due to Go 1.18+ API changes")
-	return []byte{}, nil
+	return allPEM.Bytes(), nil
 }
