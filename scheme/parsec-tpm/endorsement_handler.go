@@ -1,8 +1,10 @@
-// Copyright 2023 Contributors to the Veraison project.
+// Copyright 2023-2024 Contributors to the Veraison project.
 // SPDX-License-Identifier: Apache-2.0
 package parsec_tpm
 
 import (
+	"strings"
+
 	"github.com/veraison/services/handler"
 	"github.com/veraison/services/scheme/common"
 )
@@ -18,7 +20,7 @@ func (o EndorsementHandler) Close() error {
 }
 
 func (o EndorsementHandler) GetName() string {
-	return "unsigned-corim (Parsec TPM profile)"
+	return "corim (Parsec TPM profile)"
 }
 
 func (o EndorsementHandler) GetAttestationScheme() string {
@@ -29,6 +31,14 @@ func (o EndorsementHandler) GetSupportedMediaTypes() []string {
 	return EndorsementMediaTypes
 }
 
-func (o EndorsementHandler) Decode(data []byte) (*handler.EndorsementHandlerResponse, error) {
-	return common.UnsignedCorimDecoder(data, &CorimExtractor{})
+func (o EndorsementHandler) Decode(data []byte, mediaType string, caCertPool []byte) (*handler.EndorsementHandlerResponse, error) {
+	extractor := &CorimExtractor{}
+
+	// Choose decoder based on media type
+	if strings.Contains(mediaType, "corim-signed") {
+		return common.SignedCorimDecoder(data, extractor, caCertPool)
+	}
+
+	// Default to unsigned CoRIM decoder
+	return common.UnsignedCorimDecoder(data, extractor)
 }

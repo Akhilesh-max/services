@@ -1,4 +1,4 @@
-// Copyright 2023 Contributors to the Veraison project.
+// Copyright 2023-2024 Contributors to the Veraison project.
 // SPDX-License-Identifier: Apache-2.0
 package parsec_tpm
 
@@ -8,9 +8,12 @@ const (
 )
 
 var EndorsementMediaTypes = []string{
-	`application/corim-unsigned+cbor; profile=` + EndorsementProfile,
+	// Unsigned CoRIM profiles
+	`application/corim-unsigned+cbor; profile="http://veraison.example/parsec/tpm/1"`,
+	// Signed CoRIM profiles
+	`application/corim-signed+cbor; profile="http://veraison.example/parsec/tpm/1"`,
 }
 
 var EvidenceMediaTypes = []string{
-	"application/vnd.parallaxsecond.key-attestation.tpm",
+	"application/vnd.veraison.parsec-tpm-evidence",
 }

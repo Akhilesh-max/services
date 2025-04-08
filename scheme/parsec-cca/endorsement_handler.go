@@ -29,6 +29,8 @@ func (o EndorsementHandler) GetSupportedMediaTypes() []string {
 	return EndorsementMediaTypes
 }
 
-func (o EndorsementHandler) Decode(data []byte) (*handler.EndorsementHandlerResponse, error) {
+func (o EndorsementHandler) Decode(data []byte, mediaType string, caCertPool []byte) (*handler.EndorsementHandlerResponse, error) {
+	// Note: This implementation currently ignores the mediaType and caCertPool parameters
+	// as the unsigned CoRIM decoder doesn't require them
 	return common.UnsignedCorimDecoder(data, &ParsecCcaExtractor{})
 }
