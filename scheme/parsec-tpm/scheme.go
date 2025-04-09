@@ -8,7 +8,10 @@ const (
 )
 
 var EndorsementMediaTypes = []string{
+	// Unsigned CoRIMs
 	`application/corim-unsigned+cbor; profile=` + EndorsementProfile,
+	// Signed CoRIMs
+	`application/corim-signed+cbor; profile=` + EndorsementProfile,
 }
 
 var EvidenceMediaTypes = []string{

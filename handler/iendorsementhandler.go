@@ -3,6 +3,8 @@
 package handler
 
 import (
+	"crypto/x509"
+
 	"github.com/veraison/services/plugin"
 )
 
@@ -23,5 +25,7 @@ type IEndorsementHandler interface {
 	Close() error
 
 	// Decode the endorsements from the provided []byte.
-	Decode([]byte) (*EndorsementHandlerResponse, error)
+	// The mediaType parameter allows handlers to distinguish between signed and unsigned CoRIMs.
+	// The caCertPool parameter is used for signature verification of signed CoRIMs.
+	Decode(data []byte, mediaType string, caCertPool *x509.CertPool) (*EndorsementHandlerResponse, error)
 }
