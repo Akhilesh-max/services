@@ -1,6 +1,6 @@
 # Services
 
-This repository contains attestation services assembled using Veraison components.
+This repository contains attestation services assembled using Veraison components
 
 ## Pre-built packages
 
