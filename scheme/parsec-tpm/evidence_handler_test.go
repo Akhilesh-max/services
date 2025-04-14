@@ -217,7 +217,7 @@ func Test_GetAttestationScheme_ok(t *testing.T) {
 }
 
 func Test_GetSupportedMediaTypes_ok(t *testing.T) {
-	expectedMt := "application/vnd.parallaxsecond.key-attestation.tpm"
+	expectedMt := "application/vnd.veraison.parsec-tpm-evidence"
 	scheme := &EvidenceHandler{}
 	mtList := scheme.GetSupportedMediaTypes()
 	assert.Len(t, mtList, 1)

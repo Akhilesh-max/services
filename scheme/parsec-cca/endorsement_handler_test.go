@@ -17,7 +17,7 @@ func TestDecoder_Decode_OK(t *testing.T) {
 	d := &EndorsementHandler{}
 
 	for _, tv := range tvs {
-		_, err := d.Decode(tv)
+		_, err := d.Decode(tv, "", nil)
 		assert.NoError(t, err)
 	}
 }
@@ -68,7 +68,7 @@ func TestDecoder_Decode_empty_data(t *testing.T) {
 
 	expectedErr := `empty data`
 
-	_, err := d.Decode(emptyData)
+	_, err := d.Decode(emptyData, "", nil)
 
 	assert.EqualError(t, err, expectedErr)
 }
@@ -80,7 +80,7 @@ func TestDecoder_Decode_invalid_data(t *testing.T) {
 
 	expectedErr := `CBOR decoding failed: expected map (CBOR Major Type 5), found Major Type 3`
 
-	_, err := d.Decode(invalidCbor)
+	_, err := d.Decode(invalidCbor, "", nil)
 
 	assert.EqualError(t, err, expectedErr)
 }
