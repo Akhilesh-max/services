@@ -118,8 +118,8 @@ def _set_cca_content_types(test, variables):
     # Set platform content type
     if corim_type == 'signed':
         # Use signed content types
-        variables['platform-content-type'] = 'application/corim-signed+cbor; profile="http://arm.com/cca/ssd/1"'
-        variables['realm-content-type'] = 'application/corim-signed+cbor; profile="http://arm.com/cca/realm/1"'
+        variables['platform-content-type'] = 'application/rim+cose; profile="http://arm.com/cca/ssd/1"'
+        variables['realm-content-type'] = 'application/rim+cose; profile="http://arm.com/cca/realm/1"'
     else:
         # Use unsigned content types
         variables['platform-content-type'] = 'application/corim-unsigned+cbor; profile="http://arm.com/cca/ssd/1"'
