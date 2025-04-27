@@ -44,6 +44,8 @@ stages:
       status_code: 200
 
   - name: submit post request for CCA Realm to the provisioning service successfully
+    # Skip this step for signed CoRIM tests
+    skip: !fn format_str: "{media_type}" == "signed"
     request:
       method: POST
       url: https://{provisioning-service}/endorsement-provisioning/v1/submit
@@ -53,8 +55,6 @@ stages:
       file_body: __generated__/endorsements/corim-{scheme}-realm-{endorsements}.cbor
     response:
       status_code: 200
-    # Skip this step for signed CoRIM tests
-    skip: !fn format_str: "{media_type}" == "signed"
   - name: verify as relying party - creation of session resource
     request:
       method: POST
