@@ -62,7 +62,7 @@ def setup_cca_verify_challenge(test, variables):
     generate_evidence_from_test(test)
 
 def setup_cca_end_to_end(test, variables):
-    _set_content_types(test, variables)
+    _set_cca_content_types(test, variables)
     _set_authorization(test, variables, 'provisioner')
     _set_alt_authorization(test, variables, 'manager')
     _set_nonce(test, variables)
@@ -101,3 +101,26 @@ def _set_nonce(test, variables):
     variables['nonce-value'] = test.common_vars[nonce_config]['value']
     variables['nonce-bad-value'] = test.common_vars[nonce_config]['bad-value']
     variables['nonce-size'] = test.common_vars[nonce_config]['size']
+
+
+def _set_cca_content_types(test, variables):
+    """
+    Set the content types for CCA platform and realm based on the corim_type parameter.
+    """
+    scheme = test.test_vars['scheme']
+    profile = test.test_vars['profile']
+    corim_type = test.test_vars.get('corim_type', 'unsigned')
+    ev_content_types = test.common_vars['evidence-content-types']
+    
+    # Set evidence content type
+    variables['evidence-content-type'] = ev_content_types[f'{scheme}.{profile}']
+    
+    # Set platform content type
+    if corim_type == 'signed':
+        # Use signed content types
+        variables['platform-content-type'] = 'application/corim-signed+cbor; profile="http://arm.com/cca/ssd/1"'
+        variables['realm-content-type'] = 'application/corim-signed+cbor; profile="http://arm.com/cca/realm/1"'
+    else:
+        # Use unsigned content types
+        variables['platform-content-type'] = 'application/corim-unsigned+cbor; profile="http://arm.com/cca/ssd/1"'
+        variables['realm-content-type'] = 'application/corim-unsigned+cbor; profile="http://arm.com/cca/realm/1"'

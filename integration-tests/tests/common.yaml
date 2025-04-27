@@ -20,6 +20,8 @@ variables:
     psa.p1: application/corim-unsigned+cbor; profile="http://arm.com/psa/iot/1"
     cca._: application/corim-unsigned+cbor; profile="http://arm.com/cca/ssd/1"
     enacttrust._: application/corim-unsigned+cbor; profile="http://enacttrust.com/veraison/1.0.0"
+    cca._.signed: application/corim-signed+cbor; profile="http://arm.com/cca/ssd/1"
+    cca._.realm.signed: application/corim-signed+cbor; profile="http://arm.com/cca/realm/1"
   evidence-content-types:
     psa.p1: application/psa-attestation-token
     cca._: application/eat-collection; profile="http://arm.com/CCA-SSD/1.0.0"
