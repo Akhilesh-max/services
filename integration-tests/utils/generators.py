@@ -243,6 +243,7 @@ def sign_corim(unsigned_corim_path, signed_corim_path):
     meta_file = f'{GENDIR}/meta.json'
     meta_content = {
         "signer": {
+            "name": "Veraison Test Signer",
             "uri": "https://veraison.example/test-signer",
             "id": "Veraison Test Signer"
         }
