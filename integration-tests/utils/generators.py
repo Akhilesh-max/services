@@ -249,7 +249,6 @@ def sign_corim(unsigned_corim_path, signed_corim_path):
         }
     }
     
-    print(f"Creating meta.json file at {meta_file} with content: {json.dumps(meta_content, indent=2)}")
     with open(meta_file, 'w') as f:
         json.dump(meta_content, f, indent=2)
     
@@ -257,11 +256,6 @@ def sign_corim(unsigned_corim_path, signed_corim_path):
     key_file = 'data/keys/certs/endEntity.jwk'
     cert_file = 'data/keys/certs/endEntity.der'
     int_cert_file = 'data/keys/certs/intermediateCA.der'
-    
-    print(f"Checking if key and cert files exist:")
-    print(f"  Key file: {key_file} - {os.path.exists(key_file)}")
-    print(f"  Cert file: {cert_file} - {os.path.exists(cert_file)}")
-    print(f"  Intermediate cert file: {int_cert_file} - {os.path.exists(int_cert_file)}")
     
     # Sign the CoRIM using cocli
     sign_cmd = (
