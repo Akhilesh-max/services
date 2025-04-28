@@ -53,8 +53,8 @@ def generate_cca_end_to_end_endorsements(test):
     if corim_type == 'signed':
         signed_output_path = f'{GENDIR}/endorsements/corim-{scheme}-platform-{spec}.signed.cbor'
         sign_corim(unsigned_output_path, signed_output_path)
-        # Use the signed CoRIM as the output
-        shutil.copyfile(signed_output_path, unsigned_output_path)
+        # # Use the signed CoRIM as the output
+        # shutil.copyfile(signed_output_path, unsigned_output_path)
 
     # next realm templates
     corim_template_name = 'corim-{}-realm-{}.json'.format(scheme, spec)
@@ -71,8 +71,8 @@ def generate_cca_end_to_end_endorsements(test):
     if corim_type == 'signed':
         signed_output_path = f'{GENDIR}/endorsements/corim-{scheme}-realm-{spec}.signed.cbor'
         sign_corim(unsigned_output_path, signed_output_path)
-        # Use the signed CoRIM as the output
-        shutil.copyfile(signed_output_path, unsigned_output_path)
+        # # Use the signed CoRIM as the output
+        # shutil.copyfile(signed_output_path, unsigned_output_path)
 
 
 def generate_artefacts_from_response(response, scheme, evidence, signing, keys, expected):
