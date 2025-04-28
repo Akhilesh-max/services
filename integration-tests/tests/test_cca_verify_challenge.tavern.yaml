@@ -23,7 +23,7 @@ marks:
         # Indicates which nonce configurations ought to be used.
         - nonce
       vals:
-        - [cca, _, good, full, ccakeys, verify-challenge, nonce64]
+        - [cca, ssd, good, full, ccakeys, verify-challenge, nonce64]
 
 includes:
   - !include common.yaml
