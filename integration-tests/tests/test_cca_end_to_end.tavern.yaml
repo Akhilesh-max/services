@@ -25,8 +25,8 @@ marks:
         # Indicates whether to use signed or unsigned CoRIM
         - corim_type
       vals:
-        - [cca, _, good, full, ccakeys, good, nonce64, unsigned]
-        - [cca, _, good, full, ccakeys, good, nonce64, signed]
+        - [cca, ssd, good, full, ccakeys, good, nonce64, unsigned]
+        - [cca, ssd, good, full, ccakeys, good, nonce64, signed]
 
 includes:
   - !include common.yaml
