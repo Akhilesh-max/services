@@ -16,12 +16,13 @@ variables:
     bad-value: deadbeefdeadbeefdeadbeefdeadbeefdeadbeefdeadbeefdeadbeefdeadbeefdeadbeefdeadbeefdeadbe==
 
   bad-nonce: Ppfdfe2JzZLOk=
-  endorsements-content-types:
-    psa.p1: application/corim-unsigned+cbor; profile="http://arm.com/psa/iot/1"
-    cca._: application/corim-unsigned+cbor; profile="http://arm.com/cca/ssd/1"
-    enacttrust._: application/corim-unsigned+cbor; profile="http://enacttrust.com/veraison/1.0.0"
-    cca._.signed: application/rim+cose; profile="http://arm.com/cca/ssd/1"
-    cca._.realm.signed: application/rim+cose; profile="http://arm.com/cca/realm/1"
+endorsements-content-types:
+  psa.p1: application/corim-unsigned+cbor; profile="http://arm.com/psa/iot/1"
+  cca.ssd.unsigned: application/corim-unsigned+cbor; profile="http://arm.com/cca/ssd/1"
+  cca.realm.unsigned: application/corim-unsigned+cbor; profile="http://arm.com/cca/realm/1"
+  enacttrust._: application/corim-unsigned+cbor; profile="http://enacttrust.com/veraison/1.0.0"
+  cca.ssd.signed: application/rim+cose; profile="http://arm.com/cca/ssd/1"
+  cca.realm.signed: application/rim+cose; profile="http://arm.com/cca/realm/1"
   evidence-content-types:
     psa.p1: application/psa-attestation-token
     cca._: application/eat-collection; profile="http://arm.com/CCA-SSD/1.0.0"

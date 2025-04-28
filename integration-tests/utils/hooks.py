@@ -62,7 +62,7 @@ def setup_cca_verify_challenge(test, variables):
     generate_evidence_from_test(test)
 
 def setup_cca_end_to_end(test, variables):
-    _set_cca_content_types(test, variables)
+    _set_content_types(test, variables)
     _set_authorization(test, variables, 'provisioner')
     _set_alt_authorization(test, variables, 'manager')
     _set_nonce(test, variables)
@@ -82,8 +82,15 @@ def _set_content_types(test, variables):
     profile = test.test_vars['profile']
     ends_content_types = test.common_vars['endorsements-content-types']
     ev_content_types = test.common_vars['evidence-content-types']
-    variables['endorsements-content-type'] = ends_content_types[f'{scheme}.{profile}']
+    
     variables['evidence-content-type'] = ev_content_types[f'{scheme}.{profile}']
+    
+    if scheme == 'cca':
+        corim_type = test.test_vars.get('corim_type', 'unsigned')
+        variables['endorsements-content-type'] = ends_content_types[f'{scheme}.{profile}.{corim_type}']
+    else:
+        variables['endorsements-content-type'] = ends_content_types[f'{scheme}.{profile}']
+
 
 
 def _set_authorization(test, variables, role):
@@ -104,9 +111,6 @@ def _set_nonce(test, variables):
 
 
 def _set_cca_content_types(test, variables):
-    """
-    Set the content types for CCA platform and realm based on the corim_type parameter.
-    """
     scheme = test.test_vars['scheme']
     profile = test.test_vars['profile']
     corim_type = test.test_vars.get('corim_type', 'unsigned')

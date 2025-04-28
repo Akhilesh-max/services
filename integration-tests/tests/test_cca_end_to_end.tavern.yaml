@@ -37,7 +37,7 @@ stages:
       method: POST
       url: https://{provisioning-service}/endorsement-provisioning/v1/submit
       headers:
-        content-type: '{platform-content-type}' # set via hook
+        content-type: '{endorsements-content-type}' # set via hook
         authorization: '{authorization}' # set via hook
       file_body: __generated__/endorsements/corim-{scheme}-platform-{endorsements}.cbor
     response:
@@ -48,7 +48,7 @@ stages:
       method: POST
       url: https://{provisioning-service}/endorsement-provisioning/v1/submit
       headers:
-        content-type: '{realm-content-type}' # set via hook
+        content-type: '{endorsements-content-type}' # set via hook
         authorization: '{authorization}' # set via hook
       file_body: __generated__/endorsements/corim-{scheme}-realm-{endorsements}.cbor
     response:
