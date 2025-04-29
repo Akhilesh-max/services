@@ -25,8 +25,8 @@ marks:
         # Indicates whether to use signed or unsigned CoRIM
         - corim_type
       vals:
-        - [cca, ssd, good, full, ccakeys, good, nonce64, unsigned]
-        - [cca, ssd, good, full, ccakeys, good, nonce64, signed]
+        - [cca, _, good, full, ccakeys, good, nonce64, unsigned]
+        - [cca, _, good, full, ccakeys, good, nonce64, signed]
 
 includes:
   - !include common.yaml
@@ -37,7 +37,7 @@ stages:
       method: POST
       url: https://{provisioning-service}/endorsement-provisioning/v1/submit
       headers:
-        content-type: '{endorsements-content-type}' # set via hook
+        content-type: '{platform-en-content-type}' # set via hook
         authorization: '{authorization}' # set via hook
       file_body: __generated__/endorsements/corim-{scheme}-platform-{endorsements}.cbor
     response:
@@ -48,7 +48,7 @@ stages:
       method: POST
       url: https://{provisioning-service}/endorsement-provisioning/v1/submit
       headers:
-        content-type: '{endorsements-content-type}' # set via hook
+        content-type: '{realm-en-content-type}' # set via hook
         authorization: '{authorization}' # set via hook
       file_body: __generated__/endorsements/corim-{scheme}-realm-{endorsements}.cbor
     response:

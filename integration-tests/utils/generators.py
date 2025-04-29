@@ -233,14 +233,6 @@ def generate_corim(corim_template, comid_templates, output_path):
 
 
 def sign_corim(unsigned_corim_path, signed_corim_path):
-    """
-    Sign a CoRIM file using the endEntity key and certificate.
-    
-    Args:
-        unsigned_corim_path: Path to the unsigned CoRIM file
-        signed_corim_path: Path to save the signed CoRIM file
-    """
-    # Create a temporary meta.json file for signing
     meta_file = f'{GENDIR}/meta.json'
     meta_content = {
         "signer": {
@@ -253,7 +245,6 @@ def sign_corim(unsigned_corim_path, signed_corim_path):
     with open(meta_file, 'w') as f:
         json.dump(meta_content, f, indent=2)
     
-    # Check if the key file exists
     key_file = 'data/keys/certs/endEntity.jwk'
     cert_file = 'data/keys/certs/endEntity.der'
     int_cert_file = 'data/keys/certs/intermediateCA.der'

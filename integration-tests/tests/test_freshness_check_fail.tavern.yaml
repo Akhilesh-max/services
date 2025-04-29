@@ -24,7 +24,7 @@ marks:
         - nonce
       vals:
         - [psa, p1, good, full, ec.p256, freshness-fail, nonce32]
-        - [cca, ssd, good, full, ccakeys, freshness-fail, nonce64]
+        - [cca, _, good, full, ccakeys, freshness-fail, nonce64]
 
 includes:
   - !include common.yaml

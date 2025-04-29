@@ -62,7 +62,7 @@ def setup_cca_verify_challenge(test, variables):
     generate_evidence_from_test(test)
 
 def setup_cca_end_to_end(test, variables):
-    _set_content_types(test, variables)
+    _set_cca_content_types(test, variables)
     _set_authorization(test, variables, 'provisioner')
     _set_alt_authorization(test, variables, 'manager')
     _set_nonce(test, variables)
@@ -76,21 +76,13 @@ def setup_freshness_check_fail(test, variables):
     generate_endorsements(test)
     generate_evidence_from_test(test)
 
-
 def _set_content_types(test, variables):
     scheme = test.test_vars['scheme']
     profile = test.test_vars['profile']
     ends_content_types = test.common_vars['endorsements-content-types']
     ev_content_types = test.common_vars['evidence-content-types']
-    
+    variables['endorsements-content-type'] = ends_content_types[f'{scheme}.{profile}']
     variables['evidence-content-type'] = ev_content_types[f'{scheme}.{profile}']
-    
-    if scheme == 'cca':
-        corim_type = test.test_vars.get('corim_type', 'unsigned')
-        variables['endorsements-content-type'] = ends_content_types[f'{scheme}.{profile}.{corim_type}']
-    else:
-        variables['endorsements-content-type'] = ends_content_types[f'{scheme}.{profile}']
-
 
 
 def _set_authorization(test, variables, role):
@@ -116,15 +108,14 @@ def _set_cca_content_types(test, variables):
     corim_type = test.test_vars.get('corim_type', 'unsigned')
     ev_content_types = test.common_vars['evidence-content-types']
     
-    # Set evidence content type
     variables['evidence-content-type'] = ev_content_types[f'{scheme}.{profile}']
     
-    # Set platform content type
+    # Set platform and realm content types
     if corim_type == 'signed':
         # Use signed content types
-        variables['platform-content-type'] = 'application/rim+cose; profile="http://arm.com/cca/ssd/1"'
-        variables['realm-content-type'] = 'application/rim+cose; profile="http://arm.com/cca/realm/1"'
+        variables['platform-en-content-type'] = 'application/rim+cose; profile="http://arm.com/cca/ssd/1"'
+        variables['realm-en-content-type'] = 'application/rim+cose; profile="http://arm.com/cca/realm/1"'
     else:
         # Use unsigned content types
-        variables['platform-content-type'] = 'application/corim-unsigned+cbor; profile="http://arm.com/cca/ssd/1"'
-        variables['realm-content-type'] = 'application/corim-unsigned+cbor; profile="http://arm.com/cca/realm/1"'
+        variables['platform-en-content-type'] = 'application/corim-unsigned+cbor; profile="http://arm.com/cca/ssd/1"'
+        variables['realm-en-content-type'] = 'application/corim-unsigned+cbor; profile="http://arm.com/cca/realm/1"'
